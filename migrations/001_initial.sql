@@ -68,7 +68,7 @@ CREATE OR REPLACE TRIGGER set_tasks_updated_at
 -- ─── Seed demo agents ────────────────────────────────────────────────────────
 INSERT INTO agents (name, description, config) VALUES
   ('research-agent',
-   'Searches the web and synthesises information on any topic.',
+   'Searches the web and synthesizes information on any topic.',
    '{"model":"gpt-4o","max_steps":10,"tools":["web_search","summarise"]}'),
   ('code-agent',
    'Generates, reviews and explains code in any language.',

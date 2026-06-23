@@ -103,7 +103,7 @@ async def execute_agent_activity(inp: ExecuteAgentInput) -> str:
     This demo implementation simulates an agent that:
       1. Selects relevant built-in tools based on the agent name.
       2. Calls each tool and records the result.
-      3. Synthesises a final answer.
+      3. Synthesizes a final answer.
 
     In production, replace the tool stubs with real LLM calls or SDK agent loops.
     """
@@ -143,7 +143,7 @@ async def execute_agent_activity(inp: ExecuteAgentInput) -> str:
         await session.commit()
 
     # Build final answer
-    output = _synthesise(inp.agent_name, inp.input_text, tool_results)
+    output = _synthesize(inp.agent_name, inp.input_text, tool_results)
     logger.info("Task %s completed: %d chars", inp.task_id, len(output))
     return output
 
@@ -263,7 +263,7 @@ async def _run_generic_tools(query: str) -> list[Dict[str, Any]]:
     ]
 
 
-def _synthesise(
+def _synthesize(
     agent_name: str, input_text: str, tool_results: list[Dict[str, Any]]
 ) -> str:
     tool_summaries = "\n".join(
