@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent Platform</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#6366f1', dark: '#4f46e5', light: '#818cf8' },
+          },
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Lucide icons (CDN) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+    .sidebar-link { @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors; }
+    .sidebar-link.active { @apply bg-brand/20 text-brand-light; }
+    .sidebar-link:not(.active) { @apply text-gray-400 hover:bg-white/5 hover:text-gray-100; }
+    .card { @apply bg-gray-900 border border-gray-800 rounded-xl p-5; }
+    .btn-primary { @apply bg-brand hover:bg-brand-dark text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-ghost { @apply text-gray-400 hover:text-gray-100 hover:bg-white/5 px-3 py-1.5 rounded-lg text-sm transition-colors; }
+    .badge { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium; }
+    .pulse-dot { animation: pulse-dot 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .spinner { animation: spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    pre { white-space: pre-wrap; word-break: break-word; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+  </style>
+</head>
+
+<body class="h-full font-sans text-gray-100 antialiased">
+  <div id="app" class="flex h-full">
+
+    <!-- ─── Sidebar ─────────────────────────────────────────────────── -->
+    <aside class="w-60 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0">
+      <!-- Logo -->
+      <div class="h-16 px-5 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center">
+          <i data-lucide="cpu" class="w-4 h-4 text-white"></i>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-white">Agent Platform</p>
+          <p class="text-[10px] text-gray-500">MCP Gateway</p>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <a href="#" class="sidebar-link active" data-view="dashboard">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>Dashboard
+        </a>
+        <a href="#" class="sidebar-link" data-view="agents">
+          <i data-lucide="bot" class="w-4 h-4 shrink-0"></i>Agents
+        </a>
+        <a href="#" class="sidebar-link" data-view="tasks">
+          <i data-lucide="list-checks" class="w-4 h-4 shrink-0"></i>Tasks
+        </a>
+        <a href="#" class="sidebar-link" data-view="run">
+          <i data-lucide="play-circle" class="w-4 h-4 shrink-0"></i>Run Agent
+        </a>
+        <a href="#" class="sidebar-link" data-view="tools">
+          <i data-lucide="wrench" class="w-4 h-4 shrink-0"></i>MCP Tools
+        </a>
+        <div class="pt-2 mt-2 border-t border-gray-800">
+          <a href="/api/docs" target="_blank" class="sidebar-link">
+            <i data-lucide="file-code-2" class="w-4 h-4 shrink-0"></i>API Docs
+          </a>
+          <a href="http://localhost:8088" target="_blank" class="sidebar-link">
+            <i data-lucide="activity" class="w-4 h-4 shrink-0"></i>Temporal UI
+          </a>
+        </div>
+      </nav>
+
+      <!-- Connection status -->
+      <div class="p-4 border-t border-gray-800">
+        <div class="flex items-center gap-2 text-xs">
+          <span id="conn-dot" class="w-2 h-2 rounded-full bg-gray-600"></span>
+          <span id="conn-label" class="text-gray-500">Connecting…</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─── Main content ─────────────────────────────────────────────── -->
+    <main class="flex-1 overflow-y-auto">
+
+      <!-- Top bar -->
+      <header class="h-16 px-6 flex items-center justify-between border-b border-gray-800 sticky top-0 bg-gray-950 z-10">
+        <h1 id="page-title" class="text-lg font-semibold text-white">Dashboard</h1>
+        <div class="flex items-center gap-3">
+          <button id="refresh-btn" class="btn-ghost flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>Refresh
+          </button>
+          <span id="last-updated" class="text-xs text-gray-500"></span>
+        </div>
+      </header>
+
+      <!-- Views (only one visible at a time) -->
+      <div class="p-6 space-y-6">
+
+        <!-- ── Dashboard ── -->
+        <section id="view-dashboard">
+          <!-- Stats -->
+          <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+            <div class="card col-span-2 lg:col-span-1 xl:col-span-1">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Agents</p>
+              <p id="stat-agents" class="text-3xl font-bold text-white">—</p>
+              <p id="stat-agents-active" class="text-xs text-green-400 mt-1"></p>
+            </div>
+            <div class="card">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Tasks</p>
+              <p id="stat-total" class="text-3xl font-bold text-white">—</p>
+            </div>
+            <div class="card">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Running</p>
+              <p id="stat-running" class="text-3xl font-bold text-yellow-400">—</p>
+            </div>
+            <div class="card">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Completed</p>
+              <p id="stat-completed" class="text-3xl font-bold text-green-400">—</p>
+            </div>
+            <div class="card">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Failed</p>
+              <p id="stat-failed" class="text-3xl font-bold text-red-400">—</p>
+            </div>
+            <div class="card">
+              <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Success Rate</p>
+              <p id="stat-rate" class="text-3xl font-bold text-brand-light">—</p>
+            </div>
+          </div>
+
+          <!-- Recent tasks -->
+          <div class="card">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold text-white">Recent Tasks</h2>
+              <button class="btn-ghost text-xs" data-view="tasks">View all →</button>
+            </div>
+            <div id="recent-tasks-table"></div>
+          </div>
+        </section>
+
+        <!-- ── Agents ── -->
+        <section id="view-agents" class="hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold text-white">Registered Agents</h2>
+            <button id="add-agent-btn" class="btn-primary flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>Register Agent
+            </button>
+          </div>
+          <div id="agents-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+          <!-- Register form (hidden by default) -->
+          <div id="register-form" class="hidden mt-6 card max-w-lg">
+            <h3 class="font-semibold mb-4 text-white">Register New Agent</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Name *</label>
+                <input id="f-name" type="text" placeholder="my-agent" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Description</label>
+                <input id="f-desc" type="text" placeholder="What this agent does…" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Config JSON</label>
+                <textarea id="f-config" rows="3" placeholder='{"model":"gpt-4o","max_steps":10}' class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand"></textarea>
+              </div>
+              <div class="flex gap-2 pt-1">
+                <button id="submit-agent-btn" class="btn-primary">Register</button>
+                <button id="cancel-agent-btn" class="btn-ghost">Cancel</button>
+              </div>
+              <p id="agent-form-error" class="text-xs text-red-400 hidden"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Tasks ── -->
+        <section id="view-tasks" class="hidden">
+          <div class="flex items-center gap-3 mb-4 flex-wrap">
+            <h2 class="font-semibold text-white mr-auto">All Tasks</h2>
+            <div class="flex gap-1">
+              <button class="btn-ghost text-xs task-filter active-filter" data-status="">All</button>
+              <button class="btn-ghost text-xs task-filter" data-status="running">Running</button>
+              <button class="btn-ghost text-xs task-filter" data-status="completed">Completed</button>
+              <button class="btn-ghost text-xs task-filter" data-status="failed">Failed</button>
+            </div>
+          </div>
+          <div class="card overflow-x-auto">
+            <div id="tasks-table"></div>
+          </div>
+
+          <!-- Task detail panel -->
+          <div id="task-detail" class="hidden mt-4 card">
+            <div class="flex items-start justify-between mb-4">
+              <h3 id="task-detail-title" class="font-semibold text-white">Task Detail</h3>
+              <button id="close-detail-btn" class="btn-ghost">✕</button>
+            </div>
+            <div id="task-detail-body" class="space-y-4"></div>
+          </div>
+        </section>
+
+        <!-- ── Run Agent ── -->
+        <section id="view-run" class="hidden max-w-2xl">
+          <div class="card">
+            <h2 class="font-semibold text-white mb-4">Run an Agent</h2>
+            <div class="space-y-4">
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Select Agent *</label>
+                <select id="run-agent-select" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand">
+                  <option value="">Loading agents…</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Input / Prompt *</label>
+                <textarea id="run-input" rows="5" placeholder="Enter the task for the agent…" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand"></textarea>
+              </div>
+              <button id="run-btn" class="btn-primary w-full flex items-center justify-center gap-2">
+                <i data-lucide="play" class="w-4 h-4"></i>Submit Task
+              </button>
+              <p id="run-error" class="text-xs text-red-400 hidden"></p>
+            </div>
+          </div>
+
+          <!-- Live result panel -->
+          <div id="run-result" class="hidden mt-4 card">
+            <div class="flex items-center gap-3 mb-3">
+              <h3 class="font-semibold text-white flex-1">Task Result</h3>
+              <span id="run-status-badge"></span>
+            </div>
+            <div id="run-result-body" class="text-sm text-gray-300 space-y-3"></div>
+          </div>
+        </section>
+
+        <!-- ── MCP Tools ── -->
+        <section id="view-tools" class="hidden">
+          <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4" id="tools-grid">
+            <!-- populated by JS -->
+          </div>
+          <div class="mt-6 card">
+            <h3 class="font-semibold text-white mb-2">MCP Endpoint</h3>
+            <p class="text-sm text-gray-400 mb-3">
+              Connect any MCP-compatible client (e.g. Claude Desktop) to the streamable-HTTP endpoint below:
+            </p>
+            <code class="block bg-gray-800 rounded-lg px-4 py-3 text-sm text-green-400 font-mono">
+              <span id="mcp-sse-url"></span>
+            </code>
+            <p class="text-xs text-gray-500 mt-2">
+              Enable SSE transport by passing <code class="text-gray-400">transport="sse"</code> to <code class="text-gray-400">http_app()</code> in <code class="text-gray-400">gateway/main.py</code>.
+            </p>
+          </div>
+        </section>
+
+      </div><!-- /p-6 -->
+    </main>
+  </div><!-- /app -->
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden">
+    <div id="toast-inner" class="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 shadow-xl text-sm text-white flex items-center gap-3 min-w-[220px]">
+      <span id="toast-icon"></span>
+      <span id="toast-msg"></span>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
