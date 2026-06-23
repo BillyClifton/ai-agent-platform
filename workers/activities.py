@@ -46,7 +46,13 @@ async def _get_db_session():
     )
     import os
 
-    db_url = os.environ["DATABASE_URL"]  # Must be set via environment variable
+    try:
+        db_url = os.environ["DATABASE_URL"]
+    except KeyError:
+        raise RuntimeError(
+            "DATABASE_URL environment variable is required but not set. "
+            "Set it to a valid async PostgreSQL DSN."
+        ) from None
     engine = create_async_engine(db_url, pool_pre_ping=True)
     factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     return factory()
@@ -83,7 +89,7 @@ async def update_task_status_activity(inp: UpdateTaskStatusInput) -> None:
         if inp.error_message is not None:
             task.error_message = inp.error_message
         if inp.status in ("completed", "failed", "cancelled"):
-            task.completed_at = datetime.now(tz=timezone.utc)
+            task.completed_at = datetime.now(timezone.utc)
 
         await session.commit()
         logger.info("Task %s → %s", inp.task_id, inp.status)

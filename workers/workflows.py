@@ -62,12 +62,14 @@ class AgentExecutionWorkflow:
                 retry_policy=RetryPolicy(maximum_attempts=1),
             )
         except Exception as exc:  # noqa: BLE001
+            error_message = f"{type(exc).__name__}: {exc}"
+            workflow.logger.error("Agent execution failed: %s", error_message)
             await workflow.execute_activity(
                 update_task_status_activity,
                 UpdateTaskStatusInput(
                     task_id=task_id,
                     status="failed",
-                    error_message=str(exc),
+                    error_message=error_message,
                 ),
                 start_to_close_timeout=timedelta(seconds=30),
                 retry_policy=retry,

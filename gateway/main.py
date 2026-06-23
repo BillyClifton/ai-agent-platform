@@ -95,18 +95,16 @@ _ui_dir = Path(__file__).parent.parent / "ui"
 if _ui_dir.exists():
     app.mount("/static", StaticFiles(directory=str(_ui_dir / "static")), name="static")
 
+    # Serve the SPA shell for all non-API, non-static routes.
+    # Static assets are handled by the /static mount above; this catch-all
+    # always returns index.html so that client-side routing works correctly
+    # and no user-supplied path is ever passed to the filesystem.
+    _index_html = str(_ui_dir / "index.html")
+
     @app.get("/", include_in_schema=False)
     async def serve_ui():
-        return FileResponse(str(_ui_dir / "index.html"))
+        return FileResponse(_index_html)
 
     @app.get("/{path:path}", include_in_schema=False)
-    async def catch_all(path: str):
-        # Resolve candidate and guard against path-traversal attacks.
-        ui_root = _ui_dir.resolve()
-        candidate = (ui_root / path).resolve()
-        if not str(candidate).startswith(str(ui_root) + "/") and candidate != ui_root:
-            # Path escapes the UI directory – serve index for SPA routing.
-            return FileResponse(str(_ui_dir / "index.html"))
-        if candidate.exists() and candidate.is_file():
-            return FileResponse(str(candidate))
-        return FileResponse(str(_ui_dir / "index.html"))
+    async def catch_all(path: str):  # noqa: ARG001
+        return FileResponse(_index_html)

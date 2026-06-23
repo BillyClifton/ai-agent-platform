@@ -102,8 +102,11 @@ async def run_agent(agent_name: str, input_text: str) -> Dict[str, Any]:
             task.run_id = handle.first_execution_run_id
             task.status = "running"
         except Exception as exc:  # noqa: BLE001
+            error_detail = f"{type(exc).__name__}: {exc}"
             task.status = "failed"
-            task.error_message = str(exc)
+            task.error_message = error_detail
+            await session.commit()
+            return {"error": f"Failed to start workflow: {error_detail}"}
 
         await session.commit()
         await session.refresh(task)
