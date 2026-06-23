@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: ai-agent-platform
+data:
+  TEMPORAL_HOST: "temporal:7233"
+  TEMPORAL_NAMESPACE: "default"
+  TEMPORAL_TASK_QUEUE: "agent-tasks"
+  POSTGRES_DB: "aiagentplatform"
+  LOG_LEVEL: "info"
