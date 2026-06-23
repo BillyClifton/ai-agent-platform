@@ -240,7 +240,7 @@ kubectl apply -f k8s/worker/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `******localhost:5432/aiagentplatform` | Async PostgreSQL DSN |
+| `DATABASE_URL` | *(required)* | Async PostgreSQL DSN – set via env or `.env` file |
 | `TEMPORAL_HOST` | `localhost:7233` | Temporal frontend address |
 | `TEMPORAL_NAMESPACE` | `default` | Temporal namespace |
 | `TEMPORAL_TASK_QUEUE` | `agent-tasks` | Temporal task queue name |

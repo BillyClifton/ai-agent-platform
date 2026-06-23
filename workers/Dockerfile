@@ -7,14 +7,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # Install gateway deps first (worker imports gateway models)
-COPY ../gateway/requirements.txt ./gateway-requirements.txt
+COPY gateway/requirements.txt ./gateway-requirements.txt
 RUN pip install --no-cache-dir -r gateway-requirements.txt
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY workers/requirements.txt ./workers-requirements.txt
+RUN pip install --no-cache-dir -r workers-requirements.txt
 
-# Copy source
-COPY ../gateway /app/gateway/
-COPY . /app/workers/
+# Copy source from project root
+COPY gateway/ ./gateway/
+COPY workers/ ./workers/
 
 CMD ["python", "-m", "workers.main"]

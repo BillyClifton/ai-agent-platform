@@ -101,7 +101,12 @@ if _ui_dir.exists():
 
     @app.get("/{path:path}", include_in_schema=False)
     async def catch_all(path: str):
-        candidate = _ui_dir / path
+        # Resolve candidate and guard against path-traversal attacks.
+        ui_root = _ui_dir.resolve()
+        candidate = (ui_root / path).resolve()
+        if not str(candidate).startswith(str(ui_root) + "/") and candidate != ui_root:
+            # Path escapes the UI directory – serve index for SPA routing.
+            return FileResponse(str(_ui_dir / "index.html"))
         if candidate.exists() and candidate.is_file():
             return FileResponse(str(candidate))
         return FileResponse(str(_ui_dir / "index.html"))

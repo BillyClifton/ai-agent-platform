@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from typing import List
 
@@ -10,11 +11,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # Database – override with DATABASE_URL environment variable in production.
-    # Default targets local dev; password is a non-secret dev placeholder.
-    database_url: str = (
-        "******localhost:5432/aiagentplatform"
-    )
+    # Database – must be set via the DATABASE_URL environment variable.
+    # No default is provided here; use docker-compose.yml or k8s/secret.yaml.
+    database_url: str
 
     # Temporal
     temporal_host: str = "localhost:7233"

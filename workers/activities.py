@@ -46,11 +46,7 @@ async def _get_db_session():
     )
     import os
 
-    db_url = os.environ.get(
-        "DATABASE_URL",
-        "******localhost:5432/aiagentplatform",
-    )
-
+    db_url = os.environ["DATABASE_URL"]  # Must be set via environment variable
     engine = create_async_engine(db_url, pool_pre_ping=True)
     factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     return factory()

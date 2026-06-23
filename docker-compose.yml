@@ -80,8 +80,8 @@ services:
   # ─── Temporal Worker ──────────────────────────────────────────────────────────
   worker:
     build:
-      context: ./workers
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: workers/Dockerfile
     container_name: platform-worker
     restart: unless-stopped
     environment:
